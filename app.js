@@ -260,21 +260,29 @@ async function uploadAll() {
   }
   state.clips = [];
   state.uploaded = 0;
-  if (state.angel) return showDone(); // 이 기기는 이미 명단에 있다
   drawCard($('card-full'), 4);
   // 도장 4개가 차례로 쾅쾅 찍힌다
   [...$('card-full').children].forEach((slot, i) => {
     slot.classList.add('stamp-in');
     slot.style.animationDelay = `${i * 160}ms`;
   });
-  state.nick = defaultNick(state.gender); // 비워 두면 쓸 이름(화면에 미리 보여 준 그대로)
-  $('nick').placeholder = state.nick;
-  $('nick-note').textContent = `비워 두면 '${state.nick}'${ro(state.nick)} 올라가요.`;
+  if (state.angel) {
+    // 이 기기는 이미 명단에 있다: 기존 이름을 보여 주고 바꾸지는 못하게(남의 줄을 고칠 수 없도록 수정 권한을 안 열어 둠)
+    $('nick').value = state.angel.nickname || '';
+    $('nick').readOnly = true;
+    $('nick-note').textContent = '이미 복 받을 명단에 올라가 있어요.';
+    $('join').textContent = '명단 보러 가기';
+  } else {
+    state.nick = defaultNick(state.gender); // 비워 두면 쓸 이름(화면에 미리 보여 준 그대로)
+    $('nick').placeholder = state.nick;
+    $('nick-note').textContent = `비워 두면 '${state.nick}'${ro(state.nick)} 올라가요.`;
+  }
   show('nickname');
 }
 
 // 복 받을 명단에 올리고 완료 화면으로 간다.
 async function join() {
+  if (state.angel) return showDone(); // 이미 올라가 있으면 바로 명단으로
   $('join').disabled = true;
   const { data, error } = await db.from('angels')
     .insert({ nickname: cleanNickname($('nick').value) || state.nick }).select('id, nickname').single();

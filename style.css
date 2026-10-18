@@ -365,6 +365,7 @@ section[data-screen="done"] .big-stamp { top: 12px; left: auto; right: -56px; ma
 }
 
 .field input:focus { border-color: var(--ink); outline: none; }
+.field input:read-only { background: var(--paper); border-style: dashed; color: var(--ink-deep); } /* 이미 올라간 이름: 바꿀 수 없음 */
 .field input::placeholder { color: #9aa0d6; } /* 비워 두면 쓸 이름을 흐리게 미리 보여 준다 */
 
 /* --- 버튼 --- */
