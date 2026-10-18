@@ -80,9 +80,16 @@ function setMsg(text) { $('msg').textContent = text; }
 // 마이크를 한 번만 연다. 자동 음량 조절 등은 끄도록 요청한다.
 async function openMic() {
   if (state.stream) return state.stream;
-  state.stream = await navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: false, autoGainControl: false, noiseSuppression: false, channelCount: 1 },
-  });
+  try {
+    state.stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, autoGainControl: false, noiseSuppression: false, channelCount: 1 },
+    });
+  } catch (e) {
+    // 일부 노트북 마이크는 처리 끄기 요청에 NotReadableError를 낸다 → 기본 설정으로 다시 연다.
+    // 실제 적용된 설정은 녹음 기록(mic)에 남으니 나중에 거를 수 있다.
+    if (e.name === 'NotAllowedError' || e.name === 'SecurityError') throw e;
+    state.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  }
   return state.stream;
 }
 
@@ -95,8 +102,10 @@ async function startRec() {
   let stream;
   try {
     stream = await openMic();
-  } catch {
-    setMsg('마이크를 쓸 수 없어요. 브라우저에서 마이크를 허용한 뒤 새로고침해 주세요.');
+  } catch (e) {
+    setMsg(e.name === 'NotAllowedError'
+      ? '마이크 권한이 막혀 있어요. 주소창 왼쪽 아이콘에서 마이크를 허용한 뒤 새로고침해 주세요.'
+      : `마이크를 열 수 없어요(${e.name}). 다른 앱이 마이크를 쓰고 있다면 끄고 새로고침해 주세요.`);
     return;
   }
   const mime = pickMime();
