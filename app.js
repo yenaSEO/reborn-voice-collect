@@ -13,6 +13,7 @@ const state = {
   round: 0, // 몇 번째 세트인지(더 녹음하기마다 +1, 파일명이 겹치지 않게)
   n: 0,
   stream: null,
+  mic: null, // 실제 적용된 마이크 설정(자동 음량 조절이 꺼졌는지 등)
   recorder: null,
   chunks: [],
   blob: null,
@@ -77,9 +78,8 @@ function setBar(elapsed, sec) {
 
 function setMsg(text) { $('msg').textContent = text; }
 
-// 마이크를 한 번만 연다. 자동 음량 조절 등은 끄도록 요청한다.
+// 녹음마다 마이크를 새로 연다. 자동 음량 조절 등은 끄도록 요청한다.
 async function openMic() {
-  if (state.stream) return state.stream;
   try {
     state.stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: false, autoGainControl: false, noiseSuppression: false, channelCount: 1 },
@@ -108,6 +108,7 @@ async function startRec() {
       : `마이크를 열 수 없어요(${e.name}). 다른 앱이 마이크를 쓰고 있다면 끄고 새로고침해 주세요.`);
     return;
   }
+  state.mic = stream.getAudioTracks()[0]?.getSettings?.() || null;
   const mime = pickMime();
   const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
   state.recorder = rec;
@@ -135,6 +136,8 @@ function stopRec() {
 
 // 녹음이 끝나면 다시 듣기 화면으로 바꾼다.
 function onStopped() {
+  // 아이폰은 마이크가 켜져 있으면 소리를 통화용 스피커로 작게 내고, 재생 뒤 마이크가 멈추기도 한다 → 바로 끈다.
+  state.stream.getTracks().forEach((t) => t.stop());
   $('rec').classList.remove('is-recording');
   $('rec-label').textContent = '녹음 시작';
   if (state.duration < 1) {
@@ -159,7 +162,7 @@ async function accept() {
     sid: state.sid, set: state.round + 1, n: state.n + 1, label: m.label,
     script: m.text || `${m.pre}${m.stretch}${m.post}`, target_sec: m.sec,
     duration_sec: Number(state.duration.toFixed(2)), mime: type, gender: state.gender,
-    ua: navigator.userAgent, mic: state.stream.getAudioTracks()[0]?.getSettings?.() || null,
+    ua: navigator.userAgent, mic: state.mic,
     at: new Date().toISOString(),
   };
   const btn = $('accept');
