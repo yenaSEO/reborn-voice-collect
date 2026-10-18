@@ -88,8 +88,7 @@ function drawMission() {
   setMsg('');
   $('dock-record').hidden = false;
   $('dock-review').hidden = true;
-  $('rec').classList.remove('is-recording');
-  $('rec-label').textContent = '녹음 시작';
+  setRecording(false);
 }
 
 // 시간 막대: 막대 전체 길이 = 목표 초.
@@ -149,13 +148,25 @@ function pickMime() {
   return ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'].find((t) => MediaRecorder.isTypeSupported?.(t)) || '';
 }
 
+// 녹음 버튼과 시간 막대를 "녹음 중" 모양으로 켜고 끈다(소리 없이 눈으로 알리기).
+function setRecording(on) {
+  $('rec').classList.toggle('is-recording', on);
+  $('timebar').classList.toggle('is-recording', on);
+  $('rec-label').textContent = on ? '녹음 중 · 다 읽으면 눌러 주세요' : '녹음 시작';
+}
+
 async function startRec() {
   ensurePlaybackBoost();
   actx?.resume();
+  // 마이크가 열릴 때까지는 누를 수 없게: 아직 녹음이 안 되는데 읽기 시작하는 일을 막는다
+  $('rec').disabled = true;
+  $('rec-label').textContent = '준비 중…';
   let stream;
   try {
     stream = await openMic();
   } catch (e) {
+    $('rec').disabled = false;
+    $('rec-label').textContent = '녹음 시작';
     setMsg(e.name === 'NotAllowedError'
       ? '마이크 권한이 막혀 있어요. 주소창 왼쪽 아이콘에서 마이크를 허용한 뒤 새로고침해 주세요.'
       : `마이크를 열 수 없어요(${e.name}). 다른 앱이 마이크를 쓰고 있다면 끄고 새로고침해 주세요.`);
@@ -176,8 +187,8 @@ async function startRec() {
     setBar(el, sec);
     if (el > sec + 4) stopRec(); // 너무 길어지면 자동으로 멈춘다
   }, 100);
-  $('rec').classList.add('is-recording');
-  $('rec-label').textContent = '다 읽었어요';
+  $('rec').disabled = false;
+  setRecording(true);
   setMsg('');
 }
 
@@ -191,8 +202,7 @@ function stopRec() {
 function onStopped() {
   // 아이폰은 마이크가 켜져 있으면 소리를 통화용 스피커로 작게 내고, 재생 뒤 마이크가 멈추기도 한다 → 바로 끈다.
   state.stream.getTracks().forEach((t) => t.stop());
-  $('rec').classList.remove('is-recording');
-  $('rec-label').textContent = '녹음 시작';
+  setRecording(false);
   if (state.duration < 1) {
     setMsg('너무 짧아요. 문장을 끝까지 읽어 주세요.');
     return;

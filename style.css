@@ -427,6 +427,15 @@ button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap
 
 .btn-rec.is-recording { background: var(--ink-deep); }
 
+/* 녹음 중 표시: 마이크 아이콘 대신 깜빡이는 빨간 점, 시간 막대도 주홍으로 */
+.rec-dot { display: none; width: 12px; height: 12px; border-radius: 50%; background: var(--stamp); }
+.btn-rec.is-recording svg { display: none; }
+.btn-rec.is-recording .rec-dot { display: inline-block; animation: blink 1s ease-in-out infinite alternate; }
+.btn-rec.is-recording #rec-label { font: 800 17px var(--body); }
+.timebar.is-recording { border-color: var(--stamp); }
+.timebar.is-recording .timebar-fill { background: var(--stamp); }
+@keyframes blink { to { opacity: 0.3; } }
+
 audio { width: 100%; height: 48px; }
 
 /* --- 천사 명단 --- */
@@ -447,12 +456,12 @@ audio { width: 100%; height: 48px; }
 .angels li.is-me { background: var(--stamp); color: #fff; }
 
 @media (prefers-reduced-motion: reduce) {
-  .stamp-in, .big-stamp { animation: none; }
+  .stamp-in, .big-stamp, .rec-dot { animation: none !important; }
 }
 
 /* 완료 화면: 공유 안내가 버튼과 한 묶음으로 보이게 */
 .share-note { margin-top: 8px; }
-.share-note .aside { white-space: nowrap; }
+.share-note .aside, .nowrap { white-space: nowrap; }
 
 /* 작은 글자 버튼: 부담 없는 선택 */
 .btn-text {
