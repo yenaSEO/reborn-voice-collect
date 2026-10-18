@@ -11,7 +11,7 @@
 
 ## 녹음 내려받기
 
-Supabase 대시보드 → Storage → `recordings`에서 받거나 CLI로 받는다. 무료 프로젝트는 1주일 동안 쓰지 않으면 멈추니, 다 모이면 바로 내려받는다. 받은 파일은 ffmpeg로 16kHz 모노 WAV로 바꿔 쓴다.
+Supabase 대시보드 → Storage → `recordings`에서 받거나 CLI로 받는다. 무료 프로젝트는 1주일 동안 쓰지 않으면 멈추니, 다 모이면 바로 내려받는다. 받은 파일은 ffmpeg로 16kHz 모노 WAV로 바꿔 쓴다. 아이폰 녹음은 스테레오인데 왼쪽에만 소리가 있으니(오른쪽은 무음, 2026-10-18 확인) 두 채널을 섞지 말고 왼쪽만 쓴다: `ffmpeg -i in.webm -af "pan=mono|c0=c0" -ar 16000 out.wav`
 
 ## 점검
 

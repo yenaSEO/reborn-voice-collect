@@ -145,6 +145,10 @@ function onStopped() {
     return;
   }
   state.blob = new Blob(state.chunks, { type: state.recorder.mimeType || 'audio/webm' });
+  if (state.blob.size < 2000) { // 1초 넘게 녹음했는데 이보다 작으면 소리가 담기지 않은 것
+    setMsg('녹음이 비어 있어요. 다시 녹음해 주세요.');
+    return;
+  }
   const audio = $('playback');
   if (audio.src) URL.revokeObjectURL(audio.src);
   audio.src = URL.createObjectURL(state.blob);
