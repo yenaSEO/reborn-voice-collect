@@ -285,3 +285,5 @@ Ultramarine 700 underlined summary (4px offset) with a CSS chevron that flips wh
 The big "미션 성공" stamp is a faint background watermark (opacity 0.14, 220px, -12deg) in the top-right corner, partly cropped, so a long list never covers it; it presses in once (`soft-stamp`, 600ms) and stays visible, also under reduced motion (static). Order: "○○님, 감사합니다!" → "덕분에 졸업할 수 있을 것 같아요" → "복 받을 명단" (32px display) → name tags (17px). Dock: share note, one vermilion "친구에게 공유하기", and a small underlined text button for one more attempt. Blank nicknames get a random celebrity name by gender (or 천사님); repeats get B, C….
 
 Type note: the done-screen seal uses **Noto Serif KR 900**, loaded as a one-glyph subset (`text=福`) and used only for that 福 inside the same double ring. The nickname screen carries a faint "미션 성공" background stamp below the input (hidden when the viewport is under 740px tall).
+
+Mission screens use a slightly smaller type step (title 20px, script 22px). The fade mission draws its script word by word, each word smaller and fainter toward the end (last word 65% size, 0.5 opacity) so the reading instruction is visible.

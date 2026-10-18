@@ -80,6 +80,16 @@ function drawMission() {
     const bar = document.createElement('span');
     bar.className = 'stretch'; // 빨간 글자 뒤에 늘어나는 막대
     script.replaceChildren(m.pre, em, bar, m.post);
+  } else if (m.label === 'fade') {
+    // 작아짐: 단어마다 점점 작고 흐리게 그려서 읽는 법을 눈으로 보여 준다
+    const words = m.text.split(' ');
+    script.replaceChildren(...words.flatMap((w, i) => {
+      const span = document.createElement('span');
+      span.className = 'fade-word';
+      span.style.setProperty('--shrink', words.length > 1 ? i / (words.length - 1) : 0);
+      span.textContent = w;
+      return i ? [' ', span] : [span];
+    }));
   } else {
     script.textContent = m.text;
   }

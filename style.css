@@ -258,6 +258,15 @@ section[data-screen="done"] .big-stamp { top: 12px; left: auto; right: -56px; ma
 
 .script em { font-style: normal; font-weight: 900; color: var(--stamp); }
 
+/* 녹음 화면은 글씨를 조금 줄여 덜 꽉 차 보이게(버튼 크기는 그대로) */
+section[data-screen="mission"] { gap: 14px; }
+section[data-screen="mission"] .title { font-size: 20px; }
+section[data-screen="mission"] .script { font-size: 22px; padding: 18px 20px; }
+section[data-screen="mission"] .stamp-card { padding: 12px; gap: 8px; }
+
+/* 작아짐 대본: 뒤로 갈수록 작고 흐리게(마지막 단어 65%) */
+.fade-word { font-size: calc(1em - var(--shrink) * 0.35em); opacity: calc(1 - var(--shrink) * 0.5); }
+
 /* 늘이는 글자 뒤 막대: 길이가 "길게 끌기"를 보여 준다 */
 .stretch {
   display: inline-block;
