@@ -198,21 +198,19 @@ section[data-screen="done"] .big-stamp { top: 12px; left: auto; right: -56px; ma
 /* 준비 그림(Gemini 생성, 오른쪽 아래 표시는 잘라 냄) */
 .prep-figure { width: 100%; height: auto; border-radius: 12px; display: block; }
 
-.about-row { display: flex; flex-wrap: wrap; gap: 0 20px; }
-
-.about-tab {
-  padding: 6px 0;
-  border: 0;
-  background: none;
+.about summary {
+  cursor: pointer;
   color: var(--ink);
-  font: inherit;
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 4px;
+  list-style: none;
+  padding: 6px 0;
 }
 
+.about summary::-webkit-details-marker { display: none; }
 /* 펼침 표시: 아래로 꺾인 화살표, 열리면 위로 */
-.about-tab::after {
+.about summary::after {
   content: '';
   display: inline-block;
   width: 8px;
@@ -222,13 +220,10 @@ section[data-screen="done"] .big-stamp { top: 12px; left: auto; right: -56px; ma
   border-bottom: 2px solid currentColor;
   transform: translateY(-3px) rotate(45deg);
 }
-.about-tab[aria-expanded="true"]::after { transform: translateY(1px) rotate(-135deg); }
-
-/* 첫 화면 명단: 흰 카드 위라 이름표는 연보라, 길면 카드 안에서 스크롤 */
-.angels.is-small { max-height: 220px; overflow-y: auto; }
-.angels.is-small li { font-size: 15px; padding: 6px 12px; background: var(--paper); }
+.about[open] summary::after { transform: translateY(1px) rotate(-135deg); }
 
 .about-body {
+  margin-top: 8px;
   padding: 16px;
   background: var(--card);
   border-radius: var(--radius);
