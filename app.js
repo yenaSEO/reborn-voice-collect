@@ -399,6 +399,25 @@ $('share').onclick = async () => {
     $('done-msg').textContent = `이 주소를 보내 주세요: ${url}`;
   }
 };
+// 첫 화면 펼침 두 개: 누른 쪽만 열고 다른 쪽은 닫는다. 명단은 처음 열 때 한 번만 읽는다.
+let introListLoaded = false;
+document.querySelectorAll('.about-tab').forEach((tab) => {
+  tab.onclick = async () => {
+    const open = tab.getAttribute('aria-expanded') !== 'true';
+    document.querySelectorAll('.about-tab').forEach((t) => {
+      const on = t === tab && open;
+      t.setAttribute('aria-expanded', on);
+      $(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (open && tab.getAttribute('aria-controls') === 'about-list' && !introListLoaded) {
+      introListLoaded = true;
+      const list = $('intro-angels');
+      await drawAngels(list);
+      $('intro-empty').hidden = list.children.length > 0;
+    }
+  };
+});
+
 // 녹음 중이거나 아직 안 올린 녹음이 있으면 나가기 전에 경고한다(나가면 이번 시도는 저장되지 않는다).
 window.addEventListener('beforeunload', (e) => {
   if (state.recorder?.state === 'recording' || state.clips.length) {

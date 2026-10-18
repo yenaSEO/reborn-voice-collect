@@ -42,14 +42,20 @@
         </ul>
       </div>
 
-      <details class="about">
-        <summary>이 녹음은 어디에 쓰여요?</summary>
-        <div class="about-body">
+      <!-- 펼침 두 개: 글자는 한 줄에 고정, 누른 쪽 내용만 아래에 나온다 -->
+      <div class="about-row">
+        <button type="button" class="about-tab" aria-expanded="false" aria-controls="about-use">이 녹음은 어디에 쓰여요?</button>
+        <button type="button" class="about-tab" aria-expanded="false" aria-controls="about-list">복 받은 명단</button>
+      </div>
+      <div class="about-body" id="about-use" hidden>
           <p><b translate="no">Re-born</b>은 고립청년의 대면 훈련을 돕는 AI 서비스예요.</p>
           <p>그 안의 AI는 아직 공부 중인 학생이에요. 말할 때 소리를 길게 끌거나 목소리가 작아지는 순간을 알아채는 법을 배우고 있죠.</p>
           <p>여러분의 녹음은 이 학생이 푸는 <b>문제집</b>이에요. 문제집이 다양할수록 AI가 똑똑해져서, <span class="nowrap" translate="no">Re-born</span>을 쓰는 청년들에게 <b>더 정확한 피드백</b>을 줄 수 있어요.</p>
         </div>
-      </details>
+      <div class="about-body" id="about-list" hidden>
+        <ol class="angels is-small" id="intro-angels"></ol>
+        <p class="small" id="intro-empty" hidden>아직 아무도 없어요. 첫 번째 주인공이 되어 주세요!</p>
+      </div>
 
       <div class="dock">
         <button type="button" class="btn-stamp" data-go="consent">그래, 도와줄게!</button>
