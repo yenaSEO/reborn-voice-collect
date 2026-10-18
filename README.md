@@ -11,6 +11,7 @@
 - 같은 기기는 localStorage의 번호(sid)로 같은 사람이 된다. 다시 하면 같은 폴더에 다음 시도 번호로 쌓이고, 다음 대본 세트가 나온다.
 - 닉네임은 `angels` 표(복 받을 명단)에만 저장되고 녹음과 연결되지 않는다. 비워 두면 성별별 연예인 이름(말 안 할래요는 동물) 중 무작위, 겹치면 B·C가 붙는다.
 - 아이폰은 녹음마다 마이크를 껐다 켜고, 안드로이드는 한 번 연 마이크를 계속 쓴다(카톡에서 권한 창이 반복되지 않게).
+- 명단만 보기: https://yenaseo.github.io/reborn-voice-collect/list.html (`list.html`, `list.js`, 읽기만).
 - 예시 음성 `examples/*.mp3`는 Typecast Siyeon으로 만든다: `tts-dataset/tools/make_recorder_examples.py`.
 
 ## 처음 설정 (한 번만)

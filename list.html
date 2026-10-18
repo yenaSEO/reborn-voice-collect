@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- 복 받을 명단만 보여 주는 화면(주소: /list.html). 녹음 화면과 따로 있고 style.css만 같이 쓴다. -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#e6e9ff">
+  <title>복 받을 명단</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@900&text=%E7%A6%8F&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>a.btn-stamp { text-decoration: none; }</style>
+</head>
+<body>
+  <main>
+    <section data-screen="done">
+      <div class="big-stamp is-one" aria-hidden="true"><b>福</b></div>
+      <div class="done-body">
+        <h1 class="list-title">복 받을 명단</h1>
+        <p class="lead">덕분에 졸업할 수 있을 것 같아요, 감사합니다</p>
+        <p class="small" id="count"></p>
+        <ol class="angels" id="angels"></ol>
+      </div>
+      <div class="dock">
+        <a class="btn-stamp" href="./">나도 녹음하러 가기</a>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="list.js"></script>
+</body>
+</html>
