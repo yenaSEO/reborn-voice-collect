@@ -14,6 +14,20 @@
 - 명단만 보기: https://yenaseo.github.io/reborn-voice-collect/list.html (`list.html`, `list.js`, 읽기만).
 - 예시 음성 `examples/*.mp3`는 Typecast Siyeon으로 만든다: `tts-dataset/tools/make_recorder_examples.py`.
 
+## 파일 구성
+
+| 파일 | 하는 일 |
+|---|---|
+| `index.html`, `style.css` | 녹음 화면 5개(소개 → 동의 → 미션 4개 → 닉네임 → 완료)와 디자인 |
+| `app.js` | 화면 전환, 녹음, 다시 듣기, 한꺼번에 올리기, 기기 기억, 명단 그리기 |
+| `lib.js` | **대본 8세트**, 미션 안내 문구, **기본 닉네임 후보**, 이름 붙이기(B·C) 같은 작은 계산 — 문구·후보를 바꿀 때 여기만 고친다 |
+| `list.html`, `list.js` | 명단만 보는 화면 |
+| `config.js` | Supabase 주소와 공개 키 |
+| `supabase-setup.sql` | 저장소(recordings)와 명단 표(angels)를 만드는 SQL |
+| `examples/`, `img/` | 예시 음성 4개, 첫 화면 그림 |
+| `DESIGN.md`, `PRODUCT.md` | 색·글꼴·도장 규칙, 제품 정보 |
+| `check.mjs` | `lib.js` 자가 점검 |
+
 ## 처음 설정 (한 번만)
 
 1. **Supabase**: 새 프로젝트 → SQL Editor에 `supabase-setup.sql`을 붙여 넣고 Run.
@@ -33,6 +47,13 @@
 - 폴더 하나가 한 사람(기기)이고, 파일 이름은 `시도_미션_종류`다(`2_3_prolong_front.webm` = 2번째 시도의 3번 미션). 옆의 `.json`에 대본·성별·기기·마이크 설정이 있다. **한 시도에 녹음 4개가 다 있는 것만** 쓴다.
 - 전부 받으려면 secret(service_role) 키가 필요하다. 이 키는 모든 권한을 가진 열쇠라 **이 공개 저장소에는 절대 넣지 않고**, voice-cnn 쪽 `.env`(깃 제외)에만 둔다.
 - 16kHz 모노 WAV로 바꿔 쓴다. 아이폰 녹음은 스테레오인데 왼쪽에만 소리가 있으니(2026-10-18 확인) 왼쪽만 쓴다. 안드로이드는 모노라 같은 명령으로 된다: `ffmpeg -i in.webm -af "pan=mono|c0=c0" -ar 16000 out.wav`
+- 일부 webm은 안의 시간 표시가 전부 0으로 깨져 있어 길이가 0초처럼 읽힌다(소리는 멀쩡함, 2026-10-18 발견). 길이가 이상하면 시간 표시를 무시하고 소리만 꺼내서 바꾼다: `ffmpeg -i in.webm -af "pan=mono|c0=c0" -f s16le -ar 16000 - | ffmpeg -f s16le -ar 16000 -ac 1 -i - out.wav`. 학습용으로 받을 때는 처음부터 이 방식으로 바꾸는 게 안전하다.
+
+## 들어 보기용으로 바꾸기
+
+카톡으로 보내 바로 들으려면 m4a로 바꾼다(시간 표시가 깨진 파일도 되도록 소리만 꺼내는 방식):
+`ffmpeg -i in.webm -af "pan=mono|c0=c0" -f s16le -ar 48000 - | ffmpeg -f s16le -ar 48000 -ac 1 -i - -c:a aac -b:a 96k out.m4a`
+카톡에서는 **+ → 파일**로 보낸다.
 
 ## 점검
 
