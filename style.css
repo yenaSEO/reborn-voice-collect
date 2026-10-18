@@ -19,6 +19,8 @@
 
 * { box-sizing: border-box; }
 
+[hidden] { display: none !important; } /* display를 정한 요소도 hidden이면 숨긴다 */
+
 html { background: var(--paper); -webkit-text-size-adjust: 100%; }
 
 body {
@@ -47,8 +49,6 @@ section {
   gap: 18px;
 }
 
-section[hidden] { display: none; }
-
 p { margin: 0; }
 
 /* --- 글자 --- */
@@ -69,9 +69,9 @@ p { margin: 0; }
   text-wrap: balance;
 }
 
-.lead { font-size: 18px; color: var(--text-soft); }
+.lead { font-size: 18px; color: var(--text-soft); text-wrap: pretty; }
 
-.small { font-size: 14px; color: var(--text-soft); }
+.small { font-size: 14px; color: var(--text-soft); text-wrap: pretty; }
 
 /* --- 도장 카드 --- */
 
@@ -105,7 +105,7 @@ p { margin: 0; }
 .slot.is-stamped {
   border: 3px solid var(--stamp);
   box-shadow: inset 0 0 0 3px var(--card), inset 0 0 0 5px var(--stamp);
-  transform: rotate(-10deg);
+  transform: rotate(var(--tilt, -10deg));
 }
 
 .slot.is-stamped b {
@@ -114,27 +114,66 @@ p { margin: 0; }
   color: var(--stamp);
 }
 
+/* 첫 화면 미리보기: 여기 찍힌다는 흐린 자국 */
+.slot.is-ghost {
+  border: 3px solid var(--stamp);
+  box-shadow: inset 0 0 0 3px var(--card), inset 0 0 0 5px var(--stamp);
+  transform: rotate(var(--tilt, -10deg));
+  opacity: 0.22;
+}
+
+.slot.is-ghost b { font: 18px var(--display); font-weight: normal; color: var(--stamp); }
+
 .stamp-in { animation: stamp 420ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
 
+/* 손으로 찍은 듯 칸마다 기울기가 조금씩 다르다 */
+.slot:nth-child(1) { --tilt: -12deg; }
+.slot:nth-child(2) { --tilt: -7deg; }
+.slot:nth-child(3) { --tilt: -11deg; }
+.slot:nth-child(4) { --tilt: -6deg; }
+
+/* 찍히는 순간 잉크가 번졌다가 또렷해진다 */
 @keyframes stamp {
-  0%   { transform: scale(2.4) rotate(-28deg); opacity: 0; }
-  55%  { transform: scale(0.88) rotate(-8deg); opacity: 1; }
-  100% { transform: scale(1) rotate(-10deg); opacity: 1; }
+  0%   { transform: scale(2.4) rotate(calc(var(--tilt, -10deg) - 18deg)); opacity: 0; filter: blur(3px); }
+  55%  { transform: scale(0.88) rotate(var(--tilt, -10deg)); opacity: 1; filter: blur(0.8px); }
+  100% { transform: scale(1) rotate(var(--tilt, -10deg)); opacity: 1; filter: blur(0); }
 }
 
 .big-stamp {
-  align-self: center;
-  margin-top: 40px;
+  --tilt: -12deg;
+  position: fixed; /* 화면 위에 떠서 쾅 찍히고 사라진다(자리를 차지하지 않음) */
+  top: 22%;
+  left: 50%;
+  margin-left: -95px;
+  z-index: 10;
+  pointer-events: none;
   width: 190px;
   aspect-ratio: 1;
   border-radius: 50%;
   border: 5px solid var(--stamp);
+  background: var(--paper);
   box-shadow: inset 0 0 0 6px var(--paper), inset 0 0 0 9px var(--stamp);
   display: grid;
   place-items: center;
   text-align: center;
-  transform: rotate(-12deg);
-  animation: stamp 520ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  transform: rotate(var(--tilt));
+  animation: stamp 520ms cubic-bezier(0.2, 0.9, 0.3, 1) both, stamp-out 380ms ease-in 1300ms forwards;
+}
+
+@keyframes stamp-out {
+  to { transform: scale(0.6) rotate(var(--tilt)); opacity: 0; visibility: hidden; }
+}
+
+/* 도장이 사라질 때 인사와 명단이 아래에서 올라온다 */
+.done-body {
+  margin-top: 12px;
+  display: grid;
+  gap: 12px;
+  animation: rise 500ms cubic-bezier(0.2, 0.9, 0.3, 1) 1400ms both;
+}
+
+@keyframes rise {
+  from { transform: translateY(32px); opacity: 0; }
 }
 
 .big-stamp b { font: 44px/1.05 var(--display); font-weight: normal; color: var(--stamp); }
@@ -142,19 +181,21 @@ p { margin: 0; }
 /* --- 소개 --- */
 
 .prep {
-  margin: 0;
-  padding: 16px 16px 16px 36px;
+  padding: 16px;
   background: var(--card);
   border-radius: var(--radius);
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
+
+.prep ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
 
 .prep li::marker { color: var(--ink); }
 
 .prep b, .lead b { color: var(--ink-deep); }
 
-.angel-count { font-weight: 700; color: var(--ink); }
+/* 준비 그림(Gemini 생성, 오른쪽 아래 표시는 잘라 냄) */
+.prep-figure { width: 100%; height: auto; border-radius: 12px; display: block; }
 
 .about summary {
   cursor: pointer;
@@ -167,8 +208,18 @@ p { margin: 0; }
 }
 
 .about summary::-webkit-details-marker { display: none; }
-.about summary::after { content: ' +'; }
-.about[open] summary::after { content: ' −'; }
+/* 펼침 표시: 아래로 꺾인 화살표, 열리면 위로 */
+.about summary::after {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 10px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-3px) rotate(45deg);
+}
+.about[open] summary::after { transform: translateY(1px) rotate(-135deg); }
 
 .about-body {
   margin-top: 8px;
@@ -206,6 +257,35 @@ p { margin: 0; }
 
 .script em { font-style: normal; font-weight: 900; color: var(--stamp); }
 
+/* 늘이는 글자 뒤 막대: 길이가 "길게 끌기"를 보여 준다 */
+.stretch {
+  display: inline-block;
+  width: 2.4em;
+  height: 0.18em;
+  margin: 0 0.15em;
+  vertical-align: middle;
+  border-radius: 1em;
+  background: var(--stamp);
+}
+
+.why { margin-top: -6px; font-size: 15px; color: var(--text-soft); }
+
+.btn-example {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.btn-example svg { width: 18px; height: 18px; fill: currentColor; }
+
 .timebar {
   height: 14px;
   border: 2px solid var(--ink);
@@ -231,7 +311,22 @@ p { margin: 0; }
   border-radius: var(--radius);
 }
 
-.check input { width: 24px; height: 24px; margin: 2px 0 0; flex: none; accent-color: var(--ink); }
+/* 체크박스·라디오: 회색 기본 모양 대신 군청 잉크로 그린다 */
+.check input, .choice input {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  margin: 0;
+  border: 2px solid var(--ink);
+  background: var(--card);
+  cursor: pointer;
+}
+
+.check input { width: 24px; height: 24px; margin-top: 2px; border-radius: 6px; }
+
+.check input:checked {
+  background: var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 18px no-repeat;
+}
 
 .choice { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 
@@ -249,7 +344,9 @@ p { margin: 0; }
   cursor: pointer;
 }
 
-.choice input { accent-color: var(--ink); width: 18px; height: 18px; margin: 0; }
+.choice input { width: 20px; height: 20px; border-radius: 50%; }
+
+.choice input:checked { background: var(--ink); box-shadow: inset 0 0 0 4px var(--card); }
 
 .choice label:has(input:checked) { border-color: var(--ink); color: var(--ink-deep); font-weight: 700; }
 
@@ -275,17 +372,15 @@ p { margin: 0; }
   position: sticky;
   bottom: 0;
   margin-top: auto;
-  padding: 14px 0 calc(18px + env(safe-area-inset-bottom));
-  background: linear-gradient(to bottom, transparent, var(--paper) 22%);
+  padding: 22px 0 calc(18px + env(safe-area-inset-bottom));
+  background: linear-gradient(to bottom, transparent, var(--paper) 40%);
   display: grid;
   gap: 12px;
 }
 
-.dock[hidden] { display: none; }
-
 .row { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; }
 
-button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
 .btn-stamp, .btn-ink {
   min-height: 60px;
@@ -315,6 +410,12 @@ button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparen
 
 .btn-stamp:active, .btn-ink:active { transform: scale(0.97); }
 
+/* 마우스가 있는 기기에서만 올렸을 때 진하게 */
+@media (hover: hover) {
+  .btn-stamp:not(:disabled):not(.is-recording):hover { background: #b92c1a; }
+  .btn-ink:hover, .btn-example:hover { background: var(--paper); }
+}
+
 .btn-stamp:disabled { background: var(--ink-faint); cursor: not-allowed; transform: none; }
 
 .btn-rec { min-height: 72px; }
@@ -328,12 +429,13 @@ audio { width: 100%; height: 48px; }
 
 /* --- 천사 명단 --- */
 
-.list-title { margin: 12px 0 0; font: 22px var(--display); font-weight: normal; color: var(--ink); }
+.list-title { margin: 16px 0 0; font: 32px/1.2 var(--display); font-weight: normal; color: var(--ink); }
 
 .angels { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
 
 .angels li {
-  padding: 6px 14px;
+  padding: 8px 16px;
+  font-size: 17px;
   background: var(--card);
   border-radius: 12px;
   font-weight: 700;
@@ -343,5 +445,10 @@ audio { width: 100%; height: 48px; }
 .angels li.is-me { background: var(--stamp); color: #fff; }
 
 @media (prefers-reduced-motion: reduce) {
-  .stamp-in, .big-stamp { animation: none; }
+  .stamp-in, .done-body { animation: none; }
+  .big-stamp { display: none; }
 }
+
+/* 완료 화면: 공유 안내가 버튼과 한 묶음으로 보이게 */
+.share-note { margin-top: 8px; }
+.share-note .aside { white-space: nowrap; }

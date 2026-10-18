@@ -1,17 +1,34 @@
-// 녹음 웹의 화면 전환, 녹음, 업로드, 천사 명단을 맡는다.
-// 녹음은 브라우저 MediaRecorder로 하고, 파일과 기록(JSON)을 Supabase 비공개 버킷에 올린다.
+// 녹음 웹의 화면 전환, 녹음, 업로드, 복 받을 명단을 맡는다.
+// 녹음은 브라우저 MediaRecorder로 하고, 4개를 다 끝내면 파일과 기록(JSON)을 Supabase 비공개 버킷에 한꺼번에 올린다.
+// 같은 기기는 localStorage의 sid로 같은 사람으로 기록한다. 중간에 나가면 그 시도는 저장되지 않는다.
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.79.0/+esm';
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
-import { SETS, extFor, baseMime, clipPath, cleanNickname, angelName, isKakaoAndroid } from './lib.js';
+import { SCRIPTS, missionsFor, shuffled, extFor, baseMime, clipPath, cleanNickname, defaultNick, labelAngels, isKakaoAndroid } from './lib.js';
 
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = (id) => document.getElementById(id);
 
+// 같은 기기 기록: sid(사람 번호), attempts(시작한 횟수), order(대본 세트 순서), angel(명단 줄).
+// 사생활 보호 모드 등으로 저장이 안 되면 이번 방문에서만 쓴다.
+const STORE_KEY = 'voice-collect';
+function loadStore() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch { return null; }
+}
+function saveStore() {
+  const { sid, attempts, order, angel } = state;
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ sid, attempts, order, angel })); } catch { /* 저장 못 해도 진행 */ }
+}
+
+const saved = loadStore();
 const state = {
-  sid: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  sid: saved?.sid || (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`),
+  attempts: saved?.attempts || 0, // 이 기기에서 미션을 시작한 횟수(파일 경로와 대본 세트가 겹치지 않게)
+  order: saved?.order || shuffled(SCRIPTS.length), // 이 사람이 받을 대본 세트 순서
+  angel: saved?.angel || null, // 이미 명단에 올라갔으면 그 줄
   gender: '',
-  round: 0, // 몇 번째 세트인지(더 녹음하기마다 +1, 파일명이 겹치지 않게)
   n: 0,
+  clips: [], // 이번 시도에서 고른 녹음(다 모이면 한꺼번에 올린다)
+  uploaded: 0, // 올리다 실패했을 때 이어서 올릴 위치
   stream: null,
   mic: null, // 실제 적용된 마이크 설정(자동 음량 조절이 꺼졌는지 등)
   recorder: null,
@@ -20,11 +37,12 @@ const state = {
   duration: 0,
   t0: 0,
   timer: 0,
-  angel: null,
 };
+saveStore();
 
 // 지금 미션(세트는 순서대로 돌아가며 쓴다).
-const mission = () => SETS[state.round % SETS.length][state.n];
+const setId = () => state.order[(state.attempts - 1) % SCRIPTS.length];
+const mission = () => missionsFor(setId())[state.n];
 
 // 화면 하나만 보이게 바꾼다.
 function show(name) {
@@ -54,14 +72,18 @@ function drawMission() {
   drawCard($('card'), state.n);
   $('card').setAttribute('aria-label', `미션 ${state.n + 1} / 4`);
   $('guide').textContent = m.guide;
+  $('why').textContent = m.why;
   const script = $('script');
   if (m.stretch) {
     const em = document.createElement('em');
     em.textContent = m.stretch;
-    script.replaceChildren(m.pre, em, m.post);
+    const bar = document.createElement('span');
+    bar.className = 'stretch'; // 빨간 글자 뒤에 늘어나는 막대
+    script.replaceChildren(m.pre, em, bar, m.post);
   } else {
     script.textContent = m.text;
   }
+  $('example').src = `examples/${m.label}.mp3`;
   setBar(0, m.sec);
   setMsg('');
   $('dock-record').hidden = false;
@@ -157,87 +179,106 @@ function onStopped() {
   setMsg('한 번 들어 보고, 괜찮으면 "이걸로 할게요"를 눌러 주세요.');
 }
 
-// 녹음 파일과 기록(JSON)을 올린다. 실패하면 녹음을 지우지 않고 다시 누르게 한다.
-async function accept() {
+// 고른 녹음을 담아 두고 도장을 찍는다(올리기는 4개를 다 모은 뒤에).
+function accept() {
   const m = mission();
   const type = state.blob.type;
-  const path = clipPath(state.sid, state.round, state.n, m.label, extFor(type));
-  const meta = {
-    sid: state.sid, set: state.round + 1, n: state.n + 1, label: m.label,
-    script: m.text || `${m.pre}${m.stretch}${m.post}`, target_sec: m.sec,
-    duration_sec: Number(state.duration.toFixed(2)), mime: type, gender: state.gender,
-    ua: navigator.userAgent, mic: state.mic,
-    at: new Date().toISOString(),
+  state.clips[state.n] = {
+    path: clipPath(state.sid, state.attempts - 1, state.n, m.label, extFor(type)),
+    blob: state.blob,
+    meta: {
+      sid: state.sid, attempt: state.attempts, script_set: setId() + 1, n: state.n + 1, label: m.label,
+      script: m.text, stretch: m.stretch || null, target_sec: m.sec,
+      duration_sec: Number(state.duration.toFixed(2)), mime: type, gender: state.gender,
+      ua: navigator.userAgent, mic: state.mic,
+      at: new Date().toISOString(),
+    },
   };
-  const btn = $('accept');
-  btn.disabled = true;
-  setMsg('올리는 중이에요…');
-  const opts = { upsert: false };
-  const a = await db.storage.from('recordings').upload(path, state.blob, { ...opts, contentType: baseMime(type) });
-  const b = a.error ? a : await db.storage.from('recordings').upload(path.replace(/\.\w+$/, '.json'),
-    new Blob([JSON.stringify(meta)], { type: 'application/json' }), { ...opts, contentType: 'application/json' });
-  btn.disabled = false;
-  if (a.error || b.error) {
-    setMsg('올리기에 실패했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.');
-    return;
-  }
   stampAndNext();
 }
 
-// 도장을 찍는 연출 뒤 다음 미션으로 간다.
+// 도장을 찍는 연출 뒤 다음 미션으로, 4개째면 올리기로 간다.
 function stampAndNext() {
   drawCard($('card'), state.n + 1);
   $('card').children[state.n].classList.add('stamp-in');
-  setMsg('미션 성공!');
+  setMsg('성공!');
   $('dock-review').hidden = true;
   setTimeout(() => {
     state.n += 1;
     if (state.n < 4) return drawMission();
-    if (state.angel) return showDone(); // 추가 녹음이면 명단은 이미 올라가 있다
-    drawCard($('card-full'), 4);
-    show('nickname');
+    uploadAll();
   }, 900);
 }
 
-// 천사 명단에 올리고 완료 화면으로 간다.
+// 4개 녹음과 기록을 차례로 올린다. 실패하면 녹음을 지우지 않고 "다시 올리기"로 이어서 올린다.
+async function uploadAll() {
+  $('dock-upload').hidden = true;
+  const opts = { upsert: false };
+  for (; state.uploaded < state.clips.length; state.uploaded++) {
+    const c = state.clips[state.uploaded];
+    setMsg(`올리는 중이에요… ${state.uploaded + 1}/4`);
+    const a = await db.storage.from('recordings').upload(c.path, c.blob, { ...opts, contentType: baseMime(c.blob.type) });
+    const b = a.error ? a : await db.storage.from('recordings').upload(c.path.replace(/\.\w+$/, '.json'),
+      new Blob([JSON.stringify(c.meta)], { type: 'application/json' }), { ...opts, contentType: 'application/json' });
+    if (a.error || b.error) {
+      setMsg('올리기에 실패했어요. 인터넷 연결을 확인하고 다시 올려 주세요.');
+      $('dock-upload').hidden = false;
+      return;
+    }
+  }
+  state.clips = [];
+  state.uploaded = 0;
+  if (state.angel) return showDone(); // 이 기기는 이미 명단에 있다
+  drawCard($('card-full'), 4);
+  // 도장 4개가 차례로 쾅쾅 찍힌다
+  [...$('card-full').children].forEach((slot, i) => {
+    slot.classList.add('stamp-in');
+    slot.style.animationDelay = `${i * 160}ms`;
+  });
+  $('nick').placeholder = `비워 두면 '${defaultNick(state.gender)} A'처럼 올라가요`;
+  show('nickname');
+}
+
+// 복 받을 명단에 올리고 완료 화면으로 간다.
 async function join() {
   $('join').disabled = true;
   const { data, error } = await db.from('angels')
-    .insert({ nickname: cleanNickname($('nick').value) }).select('id, nickname').single();
+    .insert({ nickname: cleanNickname($('nick').value) || defaultNick(state.gender) }).select('id, nickname').single();
   $('join').disabled = false;
   if (error) {
     $('nick-msg').textContent = '명단에 올리지 못했어요. 잠시 뒤 다시 눌러 주세요.';
     return;
   }
   state.angel = data;
+  saveStore();
   showDone();
 }
 
 async function showDone() {
-  $('thanks').textContent = `${angelName(state.angel)}님, 고마워요!`;
+  $('thanks').textContent = '고마워요!';
   show('done');
-  await drawAngels($('angels'));
+  const me = await drawAngels($('angels'));
+  if (me) $('thanks').textContent = `${me}님, 고마워요!`;
 }
 
-// 명단을 불러와 그린다. 닉네임은 textContent로만 넣는다(태그 주입 방지).
+// 명단을 불러와 그리고, 내 이름(글자 붙은 것)을 돌려준다. 닉네임은 textContent로만 넣는다(태그 주입 방지).
 async function drawAngels(list) {
   const { data, error } = await db.from('angels').select('id, nickname').order('id', { ascending: true }).limit(500);
   if (error) {
     list.replaceChildren();
-    return;
+    return null;
   }
-  list.replaceChildren(...data.map((row) => {
+  let me = null;
+  list.replaceChildren(...labelAngels(data).map((row) => {
     const li = document.createElement('li');
-    li.textContent = angelName(row);
-    if (state.angel && row.id === state.angel.id) li.classList.add('is-me');
+    li.textContent = row.name;
+    if (state.angel && row.id === state.angel.id) {
+      li.classList.add('is-me');
+      me = row.name;
+    }
     return li;
   }));
-}
-
-// 소개 화면에 지금까지 참여한 사람 수를 보여 준다.
-async function drawCount() {
-  const { count } = await db.from('angels').select('id', { count: 'exact', head: true });
-  if (count) $('angel-count').textContent = `지금까지 천사 ${count}명이 도와줬어요`;
+  return me;
 }
 
 // --- 연결 ---
@@ -246,20 +287,49 @@ $('open-external').onclick = () => {
   location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(location.href)}`;
 };
 document.querySelectorAll('[data-go]').forEach((b) => { b.onclick = () => show(b.dataset.go); });
-$('agree').onchange = (e) => { $('begin').disabled = !e.target.checked; };
+// 동의 체크와 성별 선택(셋 중 하나)이 모두 있어야 시작할 수 있다.
+const gender = () => document.querySelector('input[name=gender]:checked')?.value;
+$('consent-form').onchange = () => {
+  const ok = $('agree').checked && Boolean(gender());
+  $('begin').disabled = !ok;
+  $('begin-hint').hidden = ok; // 왜 버튼이 꺼져 있는지 알려 준다
+};
 $('begin').onclick = () => {
-  state.gender = document.querySelector('input[name=gender]:checked').value;
+  state.gender = gender();
+  state.attempts += 1; // 시작하자마자 저장: 중간에 나가도 다음엔 새 세트·새 경로
+  state.n = 0;
+  state.clips = [];
+  state.uploaded = 0;
+  saveStore();
   drawMission();
   show('mission');
 };
 $('rec').onclick = () => (state.recorder?.state === 'recording' ? stopRec() : startRec());
 $('retry').onclick = drawMission;
-$('accept').onclick = accept;
-$('join').onclick = join;
-$('more').onclick = () => {
-  state.round += 1;
-  state.n = 0;
-  drawMission();
-  show('mission');
+$('play-example').onclick = () => {
+  $('example').play().catch(() => setMsg('예시를 아직 준비 중이에요.'));
 };
-drawCount();
+$('accept').onclick = accept;
+$('upload-retry').onclick = uploadAll;
+$('join').onclick = join;
+// 친구에게 공유: 폰은 공유 창, 안 되면 링크 복사.
+$('share').onclick = async () => {
+  const url = location.origin + location.pathname;
+  if (navigator.share) {
+    await navigator.share({ title: '너의 목소리를 들려줘', url }).catch(() => {}); // 취소해도 그냥 둔다
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    $('done-msg').textContent = '링크를 복사했어요. 카톡에 붙여 넣어 보내 주세요!';
+  } catch {
+    $('done-msg').textContent = `이 주소를 보내 주세요: ${url}`;
+  }
+};
+// 녹음 중이거나 아직 안 올린 녹음이 있으면 나가기 전에 경고한다(나가면 이번 시도는 저장되지 않는다).
+window.addEventListener('beforeunload', (e) => {
+  if (state.recorder?.state === 'recording' || state.clips.length) {
+    e.preventDefault();
+    e.returnValue = ''; // 예전 사파리용
+  }
+});

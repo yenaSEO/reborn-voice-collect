@@ -1,12 +1,12 @@
 <!doctype html>
 <!-- 지인 목소리 녹음 웹: 대본을 보여 주고 폰에서 바로 녹음해 Supabase 비공개 저장소에 올린다. -->
-<!-- 화면 순서: 소개 → 시작 전 확인 → 미션 4개 → 닉네임 → 완료(천사 명단). -->
+<!-- 화면 순서: 소개 → 시작 전 확인 → 미션 4개 → 닉네임 → 완료(복 받을 명단). -->
 <html lang="ko">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#e6e9ff">
-  <title>목소리 도장판</title>
+  <title>너의 목소리를 들려줘</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap">
@@ -24,55 +24,55 @@
         <p class="small">안 열리면 오른쪽 위 메뉴에서 '다른 브라우저로 열기'를 눌러 주세요.</p>
       </div>
 
-      <h1 class="display">목소리 도장판</h1>
-      <p class="lead">짧은 문장 4개만 읽어 주세요.<br>미션 하나를 끝낼 때마다 도장이 찍혀요.</p>
+      <h1 class="display">너의 목소리를<br>들려줘</h1>
+      <p class="lead">제 AI 프로젝트에 목소리를 빌려주세요!<br>짧은 문장 4개, <b>2분</b>이면 끝나요.</p>
 
       <div class="stamp-card" aria-hidden="true">
-        <span class="slot is-stamped"><b>성공</b></span>
+        <span class="slot is-ghost"><b>성공</b></span>
         <span class="slot"><i>2</i></span><span class="slot"><i>3</i></span><span class="slot"><i>4</i></span>
       </div>
 
-      <ul class="prep">
-        <li><b>폰을 책상 위에</b> 두고 고정해 주세요.</li>
-        <li><b>조용한 곳</b>에서 해 주세요.</li>
-        <li>다 하면 <b>2분</b>쯤 걸려요.</li>
-      </ul>
-
-      <p class="angel-count" id="angel-count"></p>
+      <div class="prep">
+        <img class="prep-figure" src="img/setup.webp" fetchpriority="high" width="600" height="381" alt="폰을 입 가까이 들고 화면을 보며 말하는 모습">
+        <ul>
+          <li>폰을 <b>입에서 한 뼘</b> 거리에 들고, 녹음하는 동안은 움직이지 마세요.</li>
+          <li><b>조용한 곳</b>에서 해 주세요.</li>
+        </ul>
+      </div>
 
       <details class="about">
         <summary>이 녹음은 어디에 쓰여요?</summary>
         <div class="about-body">
-          <!-- 임시 글: 나중에 문구 확정 -->
-          <p><b>Re-born</b>은 면접을 준비하는 청년을 돕는 AI 연습 서비스예요.</p>
+          <p><b translate="no">Re-born</b>은 고립청년의 대면 훈련을 돕는 AI 서비스예요.</p>
           <p>말할 때 소리를 길게 끄는 버릇이나, 목소리가 점점 작아지는 순간을 AI가 알아채도록 가르치고 있어요. 이 AI를 CNN이라고 불러요. 사진 속 고양이를 알아보듯, 목소리를 그림처럼 바꿔서 무늬를 찾아내요.</p>
-          <p>AI는 여러 사람의 목소리를 들을수록 똑똑해져요. 녹음은 학습에만 쓰고, 이름 대신 번호로 저장해요.</p>
+          <p>AI는 여러 사람의 목소리를 들을수록 똑똑해져요.</p>
         </div>
       </details>
 
       <div class="dock">
-        <button type="button" class="btn-stamp" data-go="consent">시작할게요</button>
+        <button type="button" class="btn-stamp" data-go="consent">그래, 도와줄게!</button>
       </div>
     </section>
 
     <!-- 2. 시작 전 확인 -->
-    <section data-screen="consent" hidden>
-      <h2 class="title">시작하기 전에</h2>
+    <section data-screen="consent" id="consent-form" hidden>
+      <h2 class="title">감사해요!<br>시작하기 전에 두 가지만 확인할게요</h2>
 
       <label class="check">
         <input type="checkbox" id="agree">
-        <span>제 목소리를 AI 학습용으로 쓰는 데 동의해요. 녹음은 번호로만 저장되고, 학습 말고는 쓰지 않아요.</span>
+        <span><b>내 목소리를 AI 학습에 쓰는 데 동의해요</b><br><small class="small">이름이나 연락처 없이 무작위 번호로만 저장되고, 학습 말고는 쓰지 않아요.</small></span>
       </label>
 
       <fieldset class="choice">
-        <legend>성별 <span class="small">(선택)</span></legend>
+        <legend>성별</legend>
         <label><input type="radio" name="gender" value="female"><span>여성</span></label>
         <label><input type="radio" name="gender" value="male"><span>남성</span></label>
-        <label><input type="radio" name="gender" value="" checked><span>말 안 할래요</span></label>
+        <label><input type="radio" name="gender" value="none"><span>말 안 할래요</span></label>
       </fieldset>
 
       <div class="dock">
-        <button type="button" class="btn-stamp" id="begin" disabled>미션 시작</button>
+        <p class="small" id="begin-hint">동의와 성별을 골라 주세요</p>
+        <button type="button" class="btn-stamp" id="begin" disabled>녹음하러 가기</button>
       </div>
     </section>
 
@@ -82,6 +82,13 @@
 
       <h2 class="title" id="guide"></h2>
       <p class="script" id="script"></p>
+
+      <p class="why" id="why"></p>
+      <button type="button" class="btn-example" id="play-example">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        예시 듣기 <span class="small">(다른 문장이에요)</span>
+      </button>
+      <audio id="example" preload="none"></audio>
 
       <div class="timebar" id="timebar" aria-hidden="true"><div class="timebar-fill" id="timebar-fill"></div></div>
       <p class="time" id="time"></p>
@@ -102,35 +109,43 @@
           <button type="button" class="btn-stamp" id="accept">이걸로 할게요</button>
         </div>
       </div>
+
+      <div class="dock" id="dock-upload" hidden>
+        <button type="button" class="btn-stamp" id="upload-retry">다시 올리기</button>
+      </div>
     </section>
 
     <!-- 4. 닉네임 -->
     <section data-screen="nickname" hidden>
       <div class="stamp-card" id="card-full" aria-hidden="true"></div>
-      <h2 class="title">도장 4개 완성!</h2>
-      <p class="lead">천사 명단에 올라갈 이름을 정해 주세요.</p>
+      <h2 class="title">도장 다 모았어요!</h2>
+      <p class="lead">마지막으로, <b>복 받을 명단</b>에 올릴 이름을 알려 주세요.</p>
       <label class="field">
         <span>닉네임</span>
-        <input type="text" id="nick" maxlength="20" autocomplete="off" placeholder="비워 두면 angel 번호로 올라가요">
+        <input type="text" id="nick" name="nickname" maxlength="20" autocomplete="off" spellcheck="false" placeholder="비워 두면 angel 번호로 올라가요">
       </label>
-      <p class="small">닉네임은 천사 명단에만 보이고, 녹음 파일에는 쓰이지 않아요.</p>
+      <p class="small">명단에만 보이고, 녹음과는 연결되지 않아요.</p>
       <p class="msg" id="nick-msg" role="status" aria-live="polite"></p>
       <div class="dock">
-        <button type="button" class="btn-stamp" id="join">명단에 올리기</button>
+        <button type="button" class="btn-stamp" id="join">내 이름 올리기</button>
       </div>
     </section>
 
     <!-- 5. 완료 -->
     <section data-screen="done" hidden>
       <div class="big-stamp" aria-hidden="true"><b>미션<br>성공</b></div>
-      <h2 class="title" id="thanks"></h2>
-      <p class="lead">덕분에 AI가 한 뼘 더 똑똑해져요.</p>
 
-      <h3 class="list-title">천사 명단</h3>
-      <ol class="angels" id="angels"></ol>
+      <div class="done-body">
+        <h2 class="title" id="thanks"></h2>
+        <h3 class="list-title">복 받을 명단</h3>
+        <p class="small">덕분에 졸업할 수 있을 것 같아요, 감사합니다</p>
+        <ol class="angels" id="angels"></ol>
+        <p class="msg" id="done-msg" role="status" aria-live="polite"></p>
+      </div>
 
       <div class="dock">
-        <button type="button" class="btn-ink" id="more">한 번 더 녹음해 줄래요? (선택)</button>
+        <p class="small share-note">녹음 링크라 모르는 사람에겐 의심받기 쉬워서,<br>아는 사람 손을 거쳐야만 닿을 수 있어요.<br>당신을 믿어 줄 친구 <b>딱 한 명에게만</b> 전해 주세요 ㅜㅜ <span class="aside">(여러 명이면 더 좋긴 해요!)</span></p>
+        <button type="button" class="btn-stamp" id="share">친구에게 공유하기</button>
       </div>
     </section>
 
