@@ -1,6 +1,6 @@
 // lib.js의 작은 함수들을 확인하는 자가 점검. 실행: node check.mjs
 import assert from 'node:assert/strict';
-import { SCRIPTS, missionsFor, splitStretch, shuffled, extFor, baseMime, clipPath, cleanNickname, defaultNick, ro, letter, labelAngels, isKakaoAndroid } from './lib.js';
+import { SCRIPTS, missionsFor, splitStretch, shuffled, extFor, baseMime, clipPath, cleanNickname, defaultNick, ro, letter, labelAngels, isKakaoAndroid, isIOS } from './lib.js';
 
 assert.equal(extFor('audio/webm;codecs=opus'), 'webm');
 assert.equal(extFor('audio/mp4'), 'm4a');
@@ -21,6 +21,10 @@ assert.deepEqual(labelAngels([
 ]).map((r) => r.name), ['박보검', '하늘', '장원영', '박보검 B', '천사님']);
 assert.ok(isKakaoAndroid('Mozilla/5.0 (Linux; Android 14) KAKAOTALK 10.8'));
 assert.ok(!isKakaoAndroid('Mozilla/5.0 (iPhone) KAKAOTALK 10.8'));
+assert.ok(isIOS('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0) KAKAOTALK'));
+assert.ok(isIOS('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)', 5)); // 아이패드
+assert.ok(!isIOS('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)', 0)); // 진짜 맥
+assert.ok(!isIOS('Mozilla/5.0 (Linux; Android 14) KAKAOTALK'));
 assert.deepEqual(splitStretch('[그]러니까 제 생각'), { pre: '', stretch: '그', post: '러니까 제 생각' });
 assert.deepEqual(splitStretch('제가 [자]신'), { pre: '제가 ', stretch: '자', post: '신' });
 for (let i = 0; i < SCRIPTS.length; i++) {

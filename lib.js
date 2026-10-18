@@ -110,3 +110,8 @@ export function labelAngels(rows) {
 export function isKakaoAndroid(ua) {
   return /KAKAOTALK/i.test(ua) && /Android/i.test(ua);
 }
+
+// 아이폰·아이패드인지(아이패드는 Mac처럼 보이기도 해서 터치 지원으로 같이 본다).
+export function isIOS(ua, touchPoints = 0) {
+  return /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && touchPoints > 1);
+}

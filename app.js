@@ -3,7 +3,7 @@
 // 같은 기기는 localStorage의 sid로 같은 사람으로 기록한다. 중간에 나가면 그 시도는 저장되지 않는다.
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.79.0/+esm';
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
-import { SCRIPTS, missionsFor, shuffled, extFor, baseMime, clipPath, cleanNickname, defaultNick, ro, labelAngels, isKakaoAndroid } from './lib.js';
+import { SCRIPTS, missionsFor, shuffled, extFor, baseMime, clipPath, cleanNickname, defaultNick, ro, labelAngels, isKakaoAndroid, isIOS } from './lib.js';
 
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = (id) => document.getElementById(id);
@@ -128,8 +128,13 @@ async function setBoostFor(blob) {
   } catch { /* 디코딩이 안 되면 그대로 */ }
 }
 
-// 녹음마다 마이크를 새로 연다. 자동 음량 조절 등은 끄도록 요청한다.
+// 아이폰은 녹음이 끝나면 마이크를 끄고 다음에 새로 연다(켜 두면 다시 듣기가 작게 들리고 다음 녹음이 비어 버림).
+// 안드로이드는 한 번 연 마이크를 계속 쓴다(카톡 안에서는 새로 열 때마다 권한 창이 뜸).
+const RELEASE_MIC = isIOS(navigator.userAgent, navigator.maxTouchPoints);
+
+// 마이크를 연다. 자동 음량 조절 등은 끄도록 요청한다.
 async function openMic() {
+  if (state.stream?.getAudioTracks().some((t) => t.readyState === 'live')) return state.stream;
   try {
     state.stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: false, autoGainControl: false, noiseSuppression: false, channelCount: 1 },
@@ -200,8 +205,7 @@ function stopRec() {
 
 // 녹음이 끝나면 다시 듣기 화면으로 바꾼다.
 function onStopped() {
-  // 아이폰은 마이크가 켜져 있으면 소리를 통화용 스피커로 작게 내고, 재생 뒤 마이크가 멈추기도 한다 → 바로 끈다.
-  state.stream.getTracks().forEach((t) => t.stop());
+  if (RELEASE_MIC) state.stream.getTracks().forEach((t) => t.stop());
   setRecording(false);
   if (state.duration < 1) {
     setMsg('너무 짧아요. 문장을 끝까지 읽어 주세요.');
@@ -254,6 +258,7 @@ function stampAndNext() {
 
 // 4개 녹음과 기록을 차례로 올린다. 실패하면 녹음을 지우지 않고 "다시 올리기"로 이어서 올린다.
 async function uploadAll() {
+  state.stream?.getTracks().forEach((t) => t.stop()); // 4개를 다 모았으니 마이크를 끈다(안드로이드도)
   $('dock-upload').hidden = true;
   const opts = { upsert: false };
   for (; state.uploaded < state.clips.length; state.uploaded++) {
