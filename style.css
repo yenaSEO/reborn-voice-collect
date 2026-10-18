@@ -1,0 +1,347 @@
+/* 스탬프 투어 도장판 디자인: 연보라 카드 종이 + 군청 잉크(구조) + 주홍 도장 잉크(행동·도장). */
+/* 움직임은 도장이 찍히는 순간 하나뿐이다. */
+
+:root {
+  --paper: #e6e9ff;
+  --card: #ffffff;
+  --ink: #2b3bd6;
+  --ink-deep: #1c2690;
+  --ink-faint: #a9b0ef;
+  --ink-mid: #6f79dc;
+  --stamp: #d6341f;
+  --text: #171a3a;
+  --text-soft: #3d4378;
+  --radius: 16px;
+  --display: 'Black Han Sans', 'Pretendard Variable', sans-serif;
+  --body: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', sans-serif;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--paper); -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--text);
+  font: 17px/1.6 var(--body);
+  caret-color: var(--ink);
+  word-break: keep-all;
+}
+
+::selection { background: var(--stamp); color: #fff; }
+
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 6px; }
+
+main {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px 16px 0;
+}
+
+section {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+section[hidden] { display: none; }
+
+p { margin: 0; }
+
+/* --- 글자 --- */
+
+.display {
+  margin: 12px 0 0;
+  font: 48px/1.1 var(--display);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.title {
+  margin: 4px 0 0;
+  font-size: 24px;
+  line-height: 1.4;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.lead { font-size: 18px; color: var(--text-soft); }
+
+.small { font-size: 14px; color: var(--text-soft); }
+
+/* --- 도장 카드 --- */
+
+.stamp-card {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 16px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 18px -10px rgb(28 38 144 / 0.45);
+}
+
+.slot {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px dashed var(--ink-faint);
+  display: grid;
+  place-items: center;
+}
+
+.slot i {
+  font: 22px var(--display);
+  font-style: normal;
+  color: var(--ink-mid);
+}
+
+.slot.is-current { border: 3px solid var(--ink); }
+.slot.is-current i { color: var(--ink); }
+
+.slot.is-stamped {
+  border: 3px solid var(--stamp);
+  box-shadow: inset 0 0 0 3px var(--card), inset 0 0 0 5px var(--stamp);
+  transform: rotate(-10deg);
+}
+
+.slot.is-stamped b {
+  font: 18px var(--display);
+  font-weight: normal;
+  color: var(--stamp);
+}
+
+.stamp-in { animation: stamp 420ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes stamp {
+  0%   { transform: scale(2.4) rotate(-28deg); opacity: 0; }
+  55%  { transform: scale(0.88) rotate(-8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-10deg); opacity: 1; }
+}
+
+.big-stamp {
+  align-self: center;
+  margin-top: 40px;
+  width: 190px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 5px solid var(--stamp);
+  box-shadow: inset 0 0 0 6px var(--paper), inset 0 0 0 9px var(--stamp);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  transform: rotate(-12deg);
+  animation: stamp 520ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.big-stamp b { font: 44px/1.05 var(--display); font-weight: normal; color: var(--stamp); }
+
+/* --- 소개 --- */
+
+.prep {
+  margin: 0;
+  padding: 16px 16px 16px 36px;
+  background: var(--card);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 6px;
+}
+
+.prep li::marker { color: var(--ink); }
+
+.prep b, .lead b { color: var(--ink-deep); }
+
+.angel-count { font-weight: 700; color: var(--ink); }
+
+.about summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  list-style: none;
+  padding: 6px 0;
+}
+
+.about summary::-webkit-details-marker { display: none; }
+.about summary::after { content: ' +'; }
+.about[open] summary::after { content: ' −'; }
+
+.about-body {
+  margin-top: 8px;
+  padding: 16px;
+  background: var(--card);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 10px;
+  font-size: 16px;
+  color: var(--text-soft);
+}
+
+.kakao-banner {
+  padding: 16px;
+  background: var(--card);
+  border: 2px solid var(--stamp);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 10px;
+}
+
+.kakao-banner b { color: var(--stamp); }
+
+/* --- 미션 --- */
+
+.script {
+  padding: 22px 20px;
+  background: var(--card);
+  border-radius: var(--radius);
+  font-size: 26px;
+  line-height: 1.45;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.script em { font-style: normal; font-weight: 900; color: var(--stamp); }
+
+.timebar {
+  height: 14px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.timebar-fill { height: 100%; width: 0; background: var(--ink); }
+
+.time { font-size: 15px; color: var(--text-soft); font-variant-numeric: tabular-nums; margin-top: -10px; }
+
+.msg { min-height: 1.6em; font-weight: 700; color: var(--ink-deep); }
+
+/* --- 입력 --- */
+
+.check {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  background: var(--card);
+  border-radius: var(--radius);
+}
+
+.check input { width: 24px; height: 24px; margin: 2px 0 0; flex: none; accent-color: var(--ink); }
+
+.choice { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+
+.choice legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+
+.choice label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 16px;
+  background: var(--card);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.choice input { accent-color: var(--ink); width: 18px; height: 18px; margin: 0; }
+
+.choice label:has(input:checked) { border-color: var(--ink); color: var(--ink-deep); font-weight: 700; }
+
+.field { display: grid; gap: 6px; font-weight: 700; }
+
+.field input {
+  height: 56px;
+  padding: 0 16px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--card);
+  border: 2px solid var(--ink-faint);
+  border-radius: 12px;
+}
+
+.field input:focus { border-color: var(--ink); outline: none; }
+.field input::placeholder { color: #6b70a0; }
+
+/* --- 버튼 --- */
+
+.dock {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  padding: 14px 0 calc(18px + env(safe-area-inset-bottom));
+  background: linear-gradient(to bottom, transparent, var(--paper) 22%);
+  display: grid;
+  gap: 12px;
+}
+
+.dock[hidden] { display: none; }
+
+.row { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; }
+
+button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+.btn-stamp, .btn-ink {
+  min-height: 60px;
+  padding: 0 18px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: transform 120ms ease-out;
+}
+
+.btn-stamp {
+  border: 0;
+  background: var(--stamp);
+  color: #fff;
+  font: 22px var(--display);
+}
+
+.btn-ink {
+  border: 2px solid var(--ink);
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 17px;
+}
+
+.btn-stamp:active, .btn-ink:active { transform: scale(0.97); }
+
+.btn-stamp:disabled { background: var(--ink-faint); cursor: not-allowed; transform: none; }
+
+.btn-rec { min-height: 72px; }
+
+.btn-rec svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.btn-rec svg rect { fill: currentColor; stroke: none; }
+
+.btn-rec.is-recording { background: var(--ink-deep); }
+
+audio { width: 100%; height: 48px; }
+
+/* --- 천사 명단 --- */
+
+.list-title { margin: 12px 0 0; font: 22px var(--display); font-weight: normal; color: var(--ink); }
+
+.angels { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+
+.angels li {
+  padding: 6px 14px;
+  background: var(--card);
+  border-radius: 12px;
+  font-weight: 700;
+  color: var(--ink-deep);
+}
+
+.angels li.is-me { background: var(--stamp); color: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp-in, .big-stamp { animation: none; }
+}
