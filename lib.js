@@ -17,7 +17,7 @@ export const SCRIPTS = [
 // 미션 종류별 안내·이유·목표 초. 예시 음성은 examples/<label>.mp3 (대본과 다른 감사 인사 문장).
 const KINDS = {
   normal: { guide: '평소 말하듯 편하게 읽어 주세요', why: 'AI가 평소 목소리를 알아야 다른 것도 구분할 수 있어요', sec: 6 },
-  fade: { guide: '처음엔 보통 크기로, 갈수록 자신 없게 작아지며 읽어 주세요', why: '면접에서 자신감이 줄며 목소리가 작아지는 순간을 가르쳐요', sec: 6 },
+  fade: { guide: '방금 읽은 문장을, 이번엔 처음엔 보통 크기로 시작해 갈수록 자신 없게 작아지며 읽어 주세요', why: '면접에서 자신감이 줄며 목소리가 작아지는 순간을 가르쳐요', sec: 6 },
   prolong_front: { guide: '빨간 글자를 2초쯤 길게 끌어 주세요', why: '말문이 막혀 소리를 길게 끄는 순간을 가르쳐요', sec: 5 },
   prolong_mid: { guide: '빨간 글자를 2초쯤 길게 끌어 주세요', why: '말문이 막혀 소리를 길게 끄는 순간을 가르쳐요', sec: 5 },
 };
@@ -68,10 +68,24 @@ export function cleanNickname(s) {
   return t || null;
 }
 
-// 닉네임을 비웠을 때 성별에 따라 넣는 기본 이름.
-const DEFAULT_NICKS = { male: '박보검', female: '장원영', none: '천사님' };
-export function defaultNick(gender) {
-  return DEFAULT_NICKS[gender] || DEFAULT_NICKS.none;
+// 닉네임을 비웠을 때 성별에 따라 무작위로 넣는 기본 이름.
+const NICK_POOL = {
+  male: ['박보검', '차은우', '송강', '정해인', '변우석', '공유', '이도현', '안효섭', '남주혁', '서강준'],
+  female: ['장원영', '카리나', '아이유', '수지', '김태리', '한소희', '윈터', '안유진', '김유정', '신세경'],
+  none: ['수달', '판다', '쿼카', '펭귄', '다람쥐', '고양이', '강아지', '햄스터', '토끼', '코알라'],
+};
+const LEGACY_NICK = '천사님'; // 닉네임이 빈 예전 시험 줄
+export function defaultNick(gender, rand = Math.random) {
+  const pool = NICK_POOL[gender] || NICK_POOL.none;
+  return pool[Math.floor(rand() * pool.length)];
+}
+
+// 이름 뒤 조사: 받침이 없거나 ㄹ이면 "로", 아니면 "으로".
+export function ro(word) {
+  const c = word.charCodeAt(word.length - 1) - 0xac00;
+  if (c < 0 || c > 11171) return '로';
+  const jong = c % 28;
+  return jong === 0 || jong === 8 ? '로' : '으로';
 }
 
 // 0 → A, 25 → Z, 26 → AA …
@@ -81,16 +95,14 @@ export function letter(i) {
   return s;
 }
 
-// 명단 이름 붙이기: 기본 이름(박보검·장원영·천사님)은 id 순서대로 A, B, C…를 붙인다.
+// 명단 이름 붙이기: 같은 이름이 또 나오면 id 순서대로 두 번째부터 B, C…를 붙인다(첫 번째는 그대로).
 // 닉네임이 빈 예전 줄은 천사님으로 본다. rows는 id 오름차순이어야 한다.
 export function labelAngels(rows) {
   const seen = {};
-  const defaults = new Set(Object.values(DEFAULT_NICKS));
   return rows.map((row) => {
-    const base = row.nickname || DEFAULT_NICKS.none;
-    if (!defaults.has(base)) return { id: row.id, name: base };
+    const base = row.nickname || LEGACY_NICK;
     seen[base] = (seen[base] || 0) + 1;
-    return { id: row.id, name: `${base} ${letter(seen[base] - 1)}` };
+    return { id: row.id, name: seen[base] === 1 ? base : `${base} ${letter(seen[base] - 1)}` };
   });
 }
 

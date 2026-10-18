@@ -3,7 +3,7 @@
 // 같은 기기는 localStorage의 sid로 같은 사람으로 기록한다. 중간에 나가면 그 시도는 저장되지 않는다.
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.79.0/+esm';
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
-import { SCRIPTS, missionsFor, shuffled, extFor, baseMime, clipPath, cleanNickname, defaultNick, labelAngels, isKakaoAndroid } from './lib.js';
+import { SCRIPTS, missionsFor, shuffled, extFor, baseMime, clipPath, cleanNickname, defaultNick, ro, labelAngels, isKakaoAndroid } from './lib.js';
 
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = (id) => document.getElementById(id);
@@ -100,6 +100,35 @@ function setBar(elapsed, sec) {
 
 function setMsg(text) { $('msg').textContent = text; }
 
+// 다시 듣기만 소리를 키운다(녹음 파일은 그대로). 폰을 떨어뜨려 녹음하면 예시보다 훨씬 작게 들리기 때문.
+// AudioContext는 사용자가 버튼을 누른 순간에 만들어야 아이폰에서 소리가 난다.
+let actx = null;
+let boost = null;
+function ensurePlaybackBoost() {
+  if (actx) return;
+  try {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    boost = actx.createGain();
+    actx.createMediaElementSource($('playback')).connect(boost).connect(actx.destination);
+  } catch {
+    actx = null; // 안 되는 기기는 원래 크기로 재생
+  }
+}
+
+// 가장 큰 소리가 -3dBFS가 되도록, 최대 10배(+20dB)까지 키운다. 못 재면 1배.
+async function setBoostFor(blob) {
+  if (!boost) return;
+  boost.gain.value = 1;
+  try {
+    const buf = await actx.decodeAudioData(await blob.arrayBuffer());
+    let peak = 0;
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      for (const v of buf.getChannelData(c)) peak = Math.max(peak, Math.abs(v));
+    }
+    if (peak > 0) boost.gain.value = Math.min(10, 0.708 / peak);
+  } catch { /* 디코딩이 안 되면 그대로 */ }
+}
+
 // 녹음마다 마이크를 새로 연다. 자동 음량 조절 등은 끄도록 요청한다.
 async function openMic() {
   try {
@@ -121,6 +150,8 @@ function pickMime() {
 }
 
 async function startRec() {
+  ensurePlaybackBoost();
+  actx?.resume();
   let stream;
   try {
     stream = await openMic();
@@ -174,6 +205,7 @@ function onStopped() {
   const audio = $('playback');
   if (audio.src) URL.revokeObjectURL(audio.src);
   audio.src = URL.createObjectURL(state.blob);
+  setBoostFor(state.blob);
   $('dock-record').hidden = true;
   $('dock-review').hidden = false;
   setMsg('한 번 들어 보고, 괜찮으면 "이걸로 할게요"를 눌러 주세요.');
@@ -235,7 +267,9 @@ async function uploadAll() {
     slot.classList.add('stamp-in');
     slot.style.animationDelay = `${i * 160}ms`;
   });
-  $('nick').placeholder = `비워 두면 '${defaultNick(state.gender)} A'처럼 올라가요`;
+  state.nick = defaultNick(state.gender); // 비워 두면 쓸 이름(화면에 미리 보여 준 그대로)
+  $('nick').placeholder = state.nick;
+  $('nick-note').textContent = `비워 두면 '${state.nick}'${ro(state.nick)} 올라가요.`;
   show('nickname');
 }
 
@@ -243,7 +277,7 @@ async function uploadAll() {
 async function join() {
   $('join').disabled = true;
   const { data, error } = await db.from('angels')
-    .insert({ nickname: cleanNickname($('nick').value) || defaultNick(state.gender) }).select('id, nickname').single();
+    .insert({ nickname: cleanNickname($('nick').value) || state.nick }).select('id, nickname').single();
   $('join').disabled = false;
   if (error) {
     $('nick-msg').textContent = '명단에 올리지 못했어요. 잠시 뒤 다시 눌러 주세요.';
@@ -255,10 +289,10 @@ async function join() {
 }
 
 async function showDone() {
-  $('thanks').textContent = '고마워요!';
+  $('thanks').textContent = '감사합니다!';
   show('done');
   const me = await drawAngels($('angels'));
-  if (me) $('thanks').textContent = `${me}님, 고마워요!`;
+  if (me) $('thanks').textContent = `${me}님, 감사합니다!`;
 }
 
 // 명단을 불러와 그리고, 내 이름(글자 붙은 것)을 돌려준다. 닉네임은 textContent로만 넣는다(태그 주입 방지).
@@ -294,18 +328,24 @@ $('consent-form').onchange = () => {
   $('begin').disabled = !ok;
   $('begin-hint').hidden = ok; // 왜 버튼이 꺼져 있는지 알려 준다
 };
-$('begin').onclick = () => {
-  state.gender = gender();
-  state.attempts += 1; // 시작하자마자 저장: 중간에 나가도 다음엔 새 세트·새 경로
+// 새 시도 시작(처음과 "한 번 더" 모두). 시작하자마자 저장: 중간에 나가도 다음엔 새 세트·새 경로.
+function startAttempt() {
+  state.attempts += 1;
   state.n = 0;
   state.clips = [];
   state.uploaded = 0;
   saveStore();
   drawMission();
   show('mission');
+}
+$('begin').onclick = () => {
+  state.gender = gender();
+  startAttempt();
 };
+$('more').onclick = startAttempt; // 동의·성별은 처음 고른 그대로
 $('rec').onclick = () => (state.recorder?.state === 'recording' ? stopRec() : startRec());
 $('retry').onclick = drawMission;
+$('playback').onplay = () => actx?.resume(); // 아이폰이 잠시 멈춰 둔 경우 다시 깨운다
 $('play-example').onclick = () => {
   $('example').play().catch(() => setMsg('예시를 아직 준비 중이에요.'));
 };

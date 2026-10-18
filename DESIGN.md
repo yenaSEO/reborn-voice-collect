@@ -282,4 +282,6 @@ Ultramarine 700 underlined summary (4px offset) with a CSS chevron that flips wh
 
 ## Done screen (2026-10-18 update)
 
-The big "미션 성공" stamp is a fixed overlay: it presses in (stamp keyframes, 520ms), holds, then shrinks and fades at 1300ms (`stamp-out`, 380ms). The thanks line and the "복 받을 명단" list (32px display heading, 17px name tags) rise into place at 1400ms (`rise`, 500ms). The list is the screen's focus; the dock holds only the share note and one vermilion "친구에게 공유하기" button. Under reduced motion the stamp is hidden and nothing animates.
+The big "미션 성공" stamp is a faint background watermark (opacity 0.14, 220px, -12deg) in the top-right corner, partly cropped, so a long list never covers it; it presses in once (`soft-stamp`, 600ms) and stays visible, also under reduced motion (static). Order: "○○님, 감사합니다!" → "덕분에 졸업할 수 있을 것 같아요" → "복 받을 명단" (32px display) → name tags (17px). Dock: share note, one vermilion "친구에게 공유하기", and a small underlined text button for one more attempt. Blank nicknames get a random celebrity name by gender (or 천사님); repeats get B, C….
+
+Type note: the done-screen seal uses **Noto Serif KR 900**, loaded as a one-glyph subset (`text=福`) and used only for that 福 inside the same double ring. The nickname screen carries a faint "미션 성공" background stamp below the input (hidden when the viewport is under 740px tall).

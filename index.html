@@ -10,6 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap">
+  <!-- 완료 화면 福 도장 한 글자만 받는 부분 글꼴 -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@900&text=%E7%A6%8F&display=swap">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -117,13 +119,15 @@
 
     <!-- 4. 닉네임 -->
     <section data-screen="nickname" hidden>
+      <div class="big-stamp" aria-hidden="true"><b>미션<br>성공</b></div>
       <div class="stamp-card" id="card-full" aria-hidden="true"></div>
       <h2 class="title">도장 다 모았어요!</h2>
       <p class="lead">마지막으로, <b>복 받을 명단</b>에 올릴 이름을 알려 주세요.</p>
       <label class="field">
         <span>닉네임</span>
-        <input type="text" id="nick" name="nickname" maxlength="20" autocomplete="off" spellcheck="false" placeholder="비워 두면 angel 번호로 올라가요">
+        <input type="text" id="nick" name="nickname" maxlength="20" autocomplete="off" spellcheck="false" placeholder="장원영">
       </label>
+      <p class="small" id="nick-note"></p>
       <p class="small">명단에만 보이고, 녹음과는 연결되지 않아요.</p>
       <p class="msg" id="nick-msg" role="status" aria-live="polite"></p>
       <div class="dock">
@@ -133,12 +137,12 @@
 
     <!-- 5. 완료 -->
     <section data-screen="done" hidden>
-      <div class="big-stamp" aria-hidden="true"><b>미션<br>성공</b></div>
+      <div class="big-stamp is-one" aria-hidden="true"><b>福</b></div>
 
       <div class="done-body">
         <h2 class="title" id="thanks"></h2>
+        <p class="lead">덕분에 졸업할 수 있을 것 같아요</p>
         <h3 class="list-title">복 받을 명단</h3>
-        <p class="small">덕분에 졸업할 수 있을 것 같아요, 감사합니다</p>
         <ol class="angels" id="angels"></ol>
         <p class="msg" id="done-msg" role="status" aria-live="polite"></p>
       </div>
@@ -146,6 +150,7 @@
       <div class="dock">
         <p class="small share-note">녹음 링크라 모르는 사람에겐 의심받기 쉬워서,<br>아는 사람 손을 거쳐야만 닿을 수 있어요.<br>당신을 믿어 줄 친구 <b>딱 한 명에게만</b> 전해 주세요 ㅜㅜ <span class="aside">(여러 명이면 더 좋긴 해요!)</span></p>
         <button type="button" class="btn-stamp" id="share">친구에게 공유하기</button>
+        <button type="button" class="btn-text" id="more">여유 있다면 한 번 더..?</button>
       </div>
     </section>
 
